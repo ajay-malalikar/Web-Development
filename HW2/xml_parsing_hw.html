@@ -1,0 +1,186 @@
+<!Doctype html>
+<head>
+	<meta charset="utf-8">
+	<title>XML Parser</title>
+	<style type="text/css">
+		body {
+			background: rgb(226,226,226);
+		}
+	</style>
+</head>
+<body>
+    <br /><br /><br />
+    <center>
+    	<div id="wrapper">
+    		<form id="form" name="form">
+	            <b>Enter URL for Company List XML File</b><br /><br />
+	            <input type="text" name="Query" id="query" maxlength="255" size="35" value="" autofocus autocomplete="on" placeholder="Enter the xml file in the same domain">
+	            <br /><br />
+	            <input type="submit" id="submit_query" onclick="parseXml()" value="Submit Query"/>
+        	</form>
+		</div>
+    </center>
+	<script type="text/javascript">
+		var parseXml = function(){
+			var query_btn = document.getElementById("query");
+			var error = document.getElementById("error_msg");
+			if(query_btn.value.trim() == "")
+			{
+				alert("Please enter XML file path");
+				query_btn.focus();
+				query_btn.select();
+				return;
+			}
+			loadXML(query_btn.value.trim())
+
+			if(window.ActiveXobject) //IF IE
+            { 
+				if(xmlDoc.parseError.errorCode !=0)
+		        {
+		            alert("Error in XML");
+					query_btn.focus();
+					query_btn.select();
+		        }
+		        else
+		        {
+		            var html = parseXmlDoc();
+					var windowElem = window.open(" ","_blank","toolbar=yes, scrollbars=yes, resizable=yes, top=100, left=130, width=1100, height=600");
+			        windowElem.document.write(html);
+		    	    windowElem.document.close();
+		        }
+	        }
+	        else
+	        {
+	        	if (xmlDoc.documentElement.nodeName=="parsererror")
+                {
+                    alert("Error in XML");
+					query_btn.focus();
+					query_btn.select();
+                }
+                else
+                {
+                	var html = parseXmlDoc();
+					var windowElem = window.open(" ","_blank","toolbar=yes, scrollbars=yes, resizable=yes, top=100, left=130, width=1100, height=600");
+			        windowElem.document.write(html);
+		    	    windowElem.document.close();
+                }
+	        }
+		};
+
+		var loadXML = function(url) {
+			if (window.XMLHttpRequest)
+			{
+				// code for IE7+, Firefox, Chrome, Opera, Safari
+				xmlhttp=new XMLHttpRequest();
+			}
+			else
+			{
+				// code for IE6, IE5
+				xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+			}
+			xmlhttp.open("GET",url,false); 
+
+			try{
+				xmlhttp.send(); 
+			}
+			catch(Exception){
+				alert("XML File doesn't exist!!!\n"+"Please Enter a URL present in the same domain");
+                query_btn.focus();
+                query_btn.select();
+			}
+			if(xmlhttp.status===200)
+            {
+                xmlDoc = xmlhttp.responseXML;
+            }
+            else
+            {
+            	alert("XML file doesn't exist")
+                query_btn.focus();
+                query_btn.select();
+                return;
+            }    
+		};
+
+		var parseXmlDoc = function(){
+			var i = 0;
+			var htmlString = "<!Doctype html><head><title>Radio Stations</title></head><body><table border='2' style='border-collapse:collapse;'><thead><tr>";
+			var headers = xmlDoc.getElementsByTagName("Header")[0].getElementsByTagName("Data");
+			if(headers.length != 6)
+			{
+				alert("Invalid XML, Insufficient headers");
+				return; 
+			}
+			for(i=0; i<headers.length; i++)
+			{
+				if(i==2)
+					htmlString+="<th style='width: 300px;'>" + headers[i].innerHTML + "</th>";
+				else
+					htmlString+="<th>" + headers[i].innerHTML + "</th>";
+			}
+			htmlString+="</thead></tr>";
+			var stations = xmlDoc.getElementsByTagName("Row");
+			if(stations == null || stations == undefined)
+			{
+				alert("Invalid XML, No radio stations listed");
+				return;
+			}
+			if(stations.length == 0)
+			{
+				alert("Invalid XML, No radio stations listed");
+				return;	
+			}
+			for(i = 0; i<stations.length; i++)
+			{
+				htmlString += "<tr>";
+				
+				var callSign = stations[i].getElementsByTagName("CallSign")[0].innerHTML;
+				htmlString += "<td>";
+				htmlString += callSign;
+				htmlString += "</td>";
+
+				var frequency = stations[i].getElementsByTagName("Frequency")[0].innerHTML;
+				htmlString += "<td>";
+				htmlString += frequency;
+				htmlString += "</td>";
+
+				htmlString += "<td style='width: 300px;'><ul>";
+				var cityElem = stations[i].getElementsByTagName("Location")[0].getElementsByTagName("City")[0];
+				if(cityElem != null || cityElem != undefined)
+				{
+					if(cityElem.innerHTML.trim() != "")
+						htmlString += "<li>" + cityElem.innerHTML + "</li>";
+				}
+				var schoolElem = stations[i].getElementsByTagName("Location")[0].getElementsByTagName("School")[0];
+				if(schoolElem != null || schoolElem != undefined)
+				{
+					if(schoolElem.innerHTML.trim() != "")
+						htmlString += "<li>" + schoolElem.innerHTML + "</li>";
+				}
+				htmlString += "</ul> </td>";
+
+				var format = stations[i].getElementsByTagName("Format")[0].innerHTML;
+				htmlString += "<td>";
+				htmlString += format;
+				htmlString += "</td>";
+
+				var homePage = stations[i].getElementsByTagName("HomePage")[0].innerHTML;
+				htmlString += "<td>";
+				htmlString += "<a href="+homePage+">"+homePage+"</a>";
+				htmlString += "</td>";
+
+				var logo = stations[i].getElementsByTagName("Logo")[0].innerHTML;
+				htmlString += "<td>";
+				htmlString += "<img src=\"" + logo + "\"alt=\"image for station"+ callSign + "\" width='250' height='100'/>";
+				htmlString += "</td>";
+
+				htmlString += "</tr>";
+			}
+			htmlString += "</table><noscript></body></html>";
+			return htmlString;
+		};
+	</script>
+	<noscript>
+</body>
+				
+
+</html>
